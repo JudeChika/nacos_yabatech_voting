@@ -1,0 +1,41 @@
+name: nacos_yabatech_voting
+description: "A secure integrated e-voting platform for NACOS Yabatech."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0' # Ensures compatibility with modern 2025 packages
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Backend Services
+  firebase_core: ^3.0.0      # Foundation for all Firebase services
+  firebase_auth: ^5.0.0      # Registration and Login logic
+  cloud_firestore: ^5.0.0    # NoSQL Database for live results
+
+  # UI and Sleek Design
+  flutter_animate: ^4.5.0    # Sleek transitions and object animations
+  google_fonts: ^6.2.1       # Classy modern typography
+  cupertino_icons: ^1.0.6
+  image_picker: ^1.2.1
+  firebase_storage: ^12.4.10
+  intl: ^0.20.2
+  url_launcher: ^6.3.2
+  dio: ^5.9.0
+  image_gallery_saver: ^2.0.3
+  permission_handler: ^12.0.1
+  universal_html: ^2.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Registering the picture background assets
+  assets:
+    - assets/images/

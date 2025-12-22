@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "867737384802",
+    "project_id": "nacosvoting-ad3fb",
+    "storage_bucket": "nacosvoting-ad3fb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:867737384802:android:804d6e1cb9c0621f4e9e3b",
+        "android_client_info": {
+          "package_name": "com.nacos.yabatech.nacos_yabatech_voting"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlg_3SHoms32_0SOM5XdZOSiPxJKuCf8Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
