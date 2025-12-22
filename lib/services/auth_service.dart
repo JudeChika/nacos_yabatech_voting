@@ -104,7 +104,7 @@ class AuthService {
       }
 
     } on FirebaseException catch (e) {
-      print("❌ AuthService: FirebaseException - Code: ${e.code}");
+      //print("❌ AuthService: FirebaseException - Code: ${e.code}");
       return "Database error: ${e.message}";
 
     } catch (e) {
