@@ -120,7 +120,7 @@ class HomeScreen extends StatelessWidget {
                             Text("Developed by Jude Chika",
                                 style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic)),
                             const SizedBox(height: 2),
-                            Text("Courtesy of NACOS Executives, 2023 set",
+                            Text("Courtesy of NACOS Executives, 2025 set",
                                 style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[400], fontWeight: FontWeight.bold)),
                             const SizedBox(height: 20),
                           ],

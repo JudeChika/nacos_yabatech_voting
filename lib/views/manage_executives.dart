@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ManageExecutivesScreen extends StatefulWidget {
   const ManageExecutivesScreen({super.key});
@@ -22,7 +21,9 @@ class _ManageExecutivesScreenState extends State<ManageExecutivesScreen> {
     "President", "Vice President", "General Secretary 1", "General Secretary 2",
     "Financial Secretary", "Treasurer", "Welfare Officer 1", "Welfare Officer 2",
     "Public Relations Officer 1", "Public Relations Officer 2", "Librarian 1", "Librarian 2",
-    "Sports Director 1", "Sports Director 2", "Social Director 1", "Social Director 2"
+    "Sports Director 1", "Sports Director 2", "Social Director 1", "Social Director 2",
+    "CSRC Speaker", "CSRC Deputy Speaker", "CSRC General Secretary", "CSRC Chief Whip",
+    "CSRC Deputy Chief Whip", "CSRC Clerk", "CSRC Assistant Clerk", "INEC Chairperson", "INEC Vice Chairperson"
   ];
   String? _selectedPosition;
 
