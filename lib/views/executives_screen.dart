@@ -6,10 +6,52 @@ import 'package:url_launcher/url_launcher.dart';
 class ExecutivesScreen extends StatelessWidget {
   const ExecutivesScreen({super.key});
 
-  Future<void> _makeCall(String phoneNumber) async {
+  // --- UPDATED CALL FUNCTION ---
+  Future<void> _makeCall(BuildContext context, String phoneNumber, String name) async {
     final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
-    if (!await launchUrl(launchUri)) {
-      throw Exception('Could not launch $launchUri');
+
+    // 1. Check if a Phone App exists on the device
+    if (await canLaunchUrl(launchUri)) {
+
+      // 2. Seek User Permission (Confirmation Dialog)
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text("Make a Call"),
+            content: Text("Do you want to call $name?\nNumber: $phoneNumber"),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx), // User denied permission
+                child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF006400),
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () async {
+                  Navigator.pop(ctx); // Close dialog
+                  // 3. Initiate the Call
+                  await launchUrl(launchUri);
+                },
+                child: const Text("Call"),
+              ),
+            ],
+          ),
+        );
+      }
+    } else {
+      // No Phone App Found
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("No calling app found on this device."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -49,13 +91,13 @@ class ExecutivesScreen extends StatelessWidget {
                       height: 60,
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
-                        shape: BoxShape.circle, // <--- Makes it a Circle
+                        shape: BoxShape.circle,
                         border: Border.all(color: Colors.grey.shade300),
                         image: (doc['imageUrl'] != "")
                             ? DecorationImage(
                           image: NetworkImage(doc['imageUrl']),
                           fit: BoxFit.cover,
-                          alignment: Alignment.topCenter, // <--- Focuses on the face
+                          alignment: Alignment.topCenter,
                         )
                             : null,
                       ),
@@ -79,10 +121,10 @@ class ExecutivesScreen extends StatelessWidget {
                       ],
                     ),
 
-                    // --- CALL BUTTON ---
+                    // --- CALL BUTTON (Updated to pass 'context' and 'name') ---
                     trailing: IconButton(
                       icon: const CircleAvatar(backgroundColor: Color(0xFFE8F5E9), child: Icon(Icons.phone, color: Color(0xFF006400))),
-                      onPressed: () => _makeCall(doc['phone']),
+                      onPressed: () => _makeCall(context, doc['phone'], doc['name']),
                     ),
                   ),
                 ),

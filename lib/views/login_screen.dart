@@ -35,10 +35,6 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
 
       if (result == null) {
-        // Successful login. AuthGate will handle routing.
-        // We don't need to do anything here, but a manual navigation
-        // can provide a slightly faster user experience.
-        // The HomeScreen will determine if the user is an admin on its own.
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -49,6 +45,52 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     }
+  }
+
+  // --- NEW FEATURE: FORGOT PASSWORD DIALOG ---
+  void _showForgotPasswordDialog() {
+    final resetEmailController = TextEditingController(text: _emailController.text);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Reset Password"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Enter your email address and we'll send you a link to reset your password."),
+            const SizedBox(height: 15),
+            TextField(
+              controller: resetEmailController,
+              decoration: const InputDecoration(labelText: "Email Address", border: OutlineInputBorder()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog first
+              final email = resetEmailController.text.trim();
+              if (email.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter an email.")));
+                return;
+              }
+
+              final error = await _authService.sendPasswordResetEmail(email);
+              if (mounted) {
+                if (error == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Reset link sent! Check your email."), backgroundColor: Colors.green));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: Colors.red));
+                }
+              }
+            },
+            child: const Text("Send Link"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -77,7 +119,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 _inputField("Email", Icons.email_outlined, _emailController),
                 const SizedBox(height: 20),
                 _inputField("Password", Icons.lock_outline, _passwordController, isPass: true),
-                const SizedBox(height: 40),
+
+                // --- FORGOT PASSWORD LINK ---
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _showForgotPasswordDialog,
+                    child: const Text("Forgot Password?", style: TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   height: 55,

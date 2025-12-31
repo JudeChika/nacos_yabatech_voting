@@ -7,7 +7,7 @@ import 'package:nacos_yabatech_voting/views/war_room.dart';
 import 'package:nacos_yabatech_voting/views/voting_screen.dart';
 import 'package:nacos_yabatech_voting/views/feed_screen.dart';
 import 'package:nacos_yabatech_voting/views/gallery_screen.dart';
-import 'package:nacos_yabatech_voting/views/executives_screen.dart'; // Import Excos Screen
+import 'package:nacos_yabatech_voting/views/executives_screen.dart';
 import 'admin_dashboard.dart';
 import 'welcome_screen.dart';
 
@@ -20,12 +20,23 @@ class HomeScreen extends StatelessWidget {
     const Color yabaGreen = Color(0xFF006400);
     const Color yabaYellow = Color(0xFFFFD700);
 
-    // Admin Emails List
-    final List<String> adminEmails = [
-      "jude2chika@gmail.com", "emmaexcel0@gmail.com",
-      "ayoakeni64@gmail.com","Adedexoladehinde@gmail.com",
+    // --- 1. DEFINE ROLES ---
+    final List<String> superAdminEmails = [
+      "jude2chika@gmail.com",
+      "emmaexcel0@gmail.com",
+      "ayoakeni64@gmail.com",
     ];
-    final bool isAdmin = user != null && adminEmails.contains(user.email);
+
+    final List<String> proEmails = [
+      "ekusinakpan9@gmail.com", // Example: Add the PRO's specific email here
+      "jude2chika@gmail.com",
+      "ayemoandrewgold@gmail.com",
+    ];
+
+    // Check Permissions
+    final bool isSuperAdmin = user != null && superAdminEmails.contains(user.email);
+    final bool isPro = user != null && proEmails.contains(user.email);
+    final bool hasAdminAccess = isSuperAdmin || isPro;
 
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
@@ -42,7 +53,10 @@ class HomeScreen extends StatelessWidget {
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
               if (context.mounted) {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const WelcomeScreen()));
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+                      (route) => false,
+                );
               }
             },
           )
@@ -78,18 +92,21 @@ class HomeScreen extends StatelessWidget {
                       _buildStatusBadge(isAccredited, hasVotedAny, yabaGreen, yabaYellow),
                       const SizedBox(height: 25),
 
-                      // Voting Button
                       StreamBuilder<DocumentSnapshot>(
                         stream: FirebaseFirestore.instance.collection('settings').doc('election').snapshots(),
                         builder: (context, settingsSnapshot) {
-                          bool isLive = settingsSnapshot.data?.get('isActive') ?? false;
+                          bool isLive = false;
+                          if (settingsSnapshot.hasData && settingsSnapshot.data!.exists) {
+                            try {
+                              isLive = settingsSnapshot.data!.get('isActive');
+                            } catch (e) { isLive = false; }
+                          }
                           return _buildVotingButton(context, isAccredited, isLive, yabaGreen);
                         },
                       ),
 
                       const SizedBox(height: 15),
 
-                      // Row: War Room & Gallery
                       Row(
                         children: [
                           Expanded(child: _buildWarRoomButton(context, yabaGreen)),
@@ -100,12 +117,13 @@ class HomeScreen extends StatelessWidget {
 
                       const SizedBox(height: 10),
 
-                      // NEW: Know Your Excos Button
                       _buildExcoButton(context, Colors.blueGrey),
 
                       const SizedBox(height: 20),
 
-                      if (isAdmin) _buildAdminEntryButton(context).animate().scale(delay: 400.ms),
+                      // --- 2. ADMIN BUTTON (SHOWN FOR BOTH ROLES) ---
+                      if (hasAdminAccess)
+                        _buildAdminEntryButton(context, isSuperAdmin).animate().scale(delay: 400.ms),
 
                       const SizedBox(height: 30),
 
@@ -113,15 +131,14 @@ class HomeScreen extends StatelessWidget {
 
                       const SizedBox(height: 50),
 
-                      // --- SIGNATURE FOOTER ---
                       Center(
                         child: Column(
                           children: [
-                            Text("Developed by Jude Chika",
+                            Text("Developed by Jude Chika (+2349136621524)",
                                 style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic)),
                             const SizedBox(height: 2),
                             Text("Courtesy of NACOS Executives, 2025 set",
-                                style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[400], fontWeight: FontWeight.bold)),
+                                style: GoogleFonts.poppins(fontSize: 10, color: Colors.green[400], fontWeight: FontWeight.bold)),
                             const SizedBox(height: 20),
                           ],
                         ),
@@ -137,37 +154,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // ... [Keep _buildHeroHeader, _buildStatusBadge, _buildVotingButton, _buildWarRoomButton, _buildGalleryButton as they were] ...
+  // ... [Keep _buildHeroHeader, _buildStatusBadge, etc. exactly as they were] ...
+  // Paste your existing helper widgets here (_buildHeroHeader, _buildStatusBadge, etc.)
 
-  // Reuse previous button widgets here. I will only show the NEW button widget code:
-
-  Widget _buildExcoButton(BuildContext context, Color color) {
-    return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ExecutivesScreen())),
-      child: Container(
-        height: 60,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: color, width: 2),
-          color: Colors.white,
-        ),
-        child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.groups, color: color),
-              const SizedBox(width: 10),
-              Text("KNOW YOUR EXECUTIVES", style: GoogleFonts.poppins(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // --- RE-ADD EXISTING WIDGETS BELOW THIS LINE TO COMPLETE THE FILE ---
-  // (Paste _buildHeroHeader, _buildStatusBadge, _buildVotingButton, etc. from previous response here)
-
+  // Re-adding the helper widgets for completeness to avoid errors
   Widget _buildHeroHeader(String name, String matric, Color green) {
     return Container(
       width: double.infinity,
@@ -292,19 +282,25 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAdminEntryButton(BuildContext context) {
-    return InkWell(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminDashboard())),
+  Widget _buildExcoButton(BuildContext context, Color color) {
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ExecutivesScreen())),
       child: Container(
-        padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.orange)),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.admin_panel_settings, color: Colors.orange),
-            SizedBox(width: 10),
-            Text("ADMIN CONTROL PANEL", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
-          ],
+        height: 60,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: color, width: 2),
+          color: Colors.white,
+        ),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.groups, color: color),
+              const SizedBox(width: 10),
+              Text("KNOW YOUR EXECUTIVES", style: GoogleFonts.poppins(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+            ],
+          ),
         ),
       ),
     );
@@ -351,6 +347,26 @@ class HomeScreen extends StatelessWidget {
       padding: const EdgeInsets.all(15),
       alignment: Alignment.bottomLeft,
       child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+    );
+  }
+
+  // --- 3. UPDATED ADMIN BUTTON ---
+  Widget _buildAdminEntryButton(BuildContext context, bool isSuperAdmin) {
+    return InkWell(
+      // Pass the permission level to the dashboard
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AdminDashboard(isSuperAdmin: isSuperAdmin))),
+      child: Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.orange)),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.admin_panel_settings, color: Colors.orange),
+            SizedBox(width: 10),
+            Text("ADMIN CONTROL PANEL", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+          ],
+        ),
+      ),
     );
   }
 }
