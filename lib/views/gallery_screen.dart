@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dio/dio.dart'; // For downloading bytes
 import 'package:image_gallery_saver/image_gallery_saver.dart'; // For mobile saving
-import 'dart:typed_data';
 import 'package:universal_html/html.dart' as html; // <--- NEW: For Web Downloads
 
 class GalleryScreen extends StatefulWidget {

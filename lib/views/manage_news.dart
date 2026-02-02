@@ -102,8 +102,9 @@ class _ManageNewsScreenState extends State<ManageNewsScreen> {
 
     // Image Preview Helper
     ImageProvider? imageProvider;
-    if (_webImage != null) imageProvider = MemoryImage(_webImage!);
-    else if (_mobileImage != null) imageProvider = FileImage(_mobileImage!);
+    if (_webImage != null) {
+      imageProvider = MemoryImage(_webImage!);
+    } else if (_mobileImage != null) imageProvider = FileImage(_mobileImage!);
 
     return Scaffold(
       appBar: AppBar(

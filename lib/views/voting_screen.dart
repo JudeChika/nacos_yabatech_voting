@@ -89,9 +89,10 @@ class _VotingScreenState extends State<VotingScreen> {
           }
 
           return StreamBuilder<QuerySnapshot>(
+            // We order by RANK so the groups appear in the correct hierarchy (President first, etc.)
             stream: FirebaseFirestore.instance
                 .collection('candidates')
-                .orderBy('position')
+                .orderBy('rank')
                 .snapshots(),
             builder: (context, candSnapshot) {
               if (!candSnapshot.hasData) return const Center(child: CircularProgressIndicator(color: yabaGreen));
@@ -99,23 +100,79 @@ class _VotingScreenState extends State<VotingScreen> {
               final docs = candSnapshot.data!.docs;
               if (docs.isEmpty) return const Center(child: Text("No candidates found."));
 
-              return GridView.builder(
-                padding: const EdgeInsets.all(15),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.70,
-                  crossAxisSpacing: 15,
-                  mainAxisSpacing: 15,
-                ),
-                itemCount: docs.length,
+              // --- GROUPING LOGIC ---
+              // Group candidates by their Position Name
+              // Since 'docs' comes sorted by Rank, this map will naturally preserve that order.
+              Map<String, List<DocumentSnapshot>> groupedCandidates = {};
+              for (var doc in docs) {
+                String position = doc['position'];
+                if (!groupedCandidates.containsKey(position)) {
+                  groupedCandidates[position] = [];
+                }
+                groupedCandidates[position]!.add(doc);
+              }
+
+              // --- BUILD LIST OF SECTIONS ---
+              return ListView.builder(
+                padding: const EdgeInsets.only(bottom: 50),
+                itemCount: groupedCandidates.length,
                 itemBuilder: (context, index) {
-                  return _buildCandidateCard(context, docs[index], yabaGreen, userVotes);
+                  String positionName = groupedCandidates.keys.elementAt(index);
+                  List<DocumentSnapshot> candidates = groupedCandidates[positionName]!;
+
+                  return _buildPositionSection(context, positionName, candidates, yabaGreen, userVotes);
                 },
               );
             },
           );
         },
       ),
+    );
+  }
+
+  // A Widget to build the Header + Grid for ONE position
+  Widget _buildPositionSection(BuildContext context, String positionName, List<DocumentSnapshot> candidates, Color primaryColor, Map<String, dynamic> userVotes) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 1. CATEGORY HEADER
+        Container(
+          margin: const EdgeInsets.fromLTRB(15, 25, 15, 10),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+          decoration: BoxDecoration(
+            color: primaryColor,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2))],
+          ),
+          child: Text(
+            positionName, // e.g. "THE PRESIDENT"
+            style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                letterSpacing: 1.2
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+
+        // 2. CANDIDATES GRID FOR THIS POSITION
+        GridView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          shrinkWrap: true, // IMPORTANT: Allows GridView to exist inside ListView
+          physics: const NeverScrollableScrollPhysics(), // Disable scrolling for grid, let parent ListView scroll
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.70,
+            crossAxisSpacing: 15,
+            mainAxisSpacing: 15,
+          ),
+          itemCount: candidates.length,
+          itemBuilder: (context, index) {
+            return _buildCandidateCard(context, candidates[index], primaryColor, userVotes);
+          },
+        ),
+      ],
     );
   }
 
@@ -126,7 +183,6 @@ class _VotingScreenState extends State<VotingScreen> {
     bool hasVotedForThisPosition = userVotes.containsKey(position);
     bool votedForThisCandidate = hasVotedForThisPosition && userVotes[position] == candidateId;
 
-    // Check if THIS specific button is currently loading
     bool isLoading = _votingStates[candidateId] ?? false;
 
     return Container(
@@ -159,27 +215,12 @@ class _VotingScreenState extends State<VotingScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    children: [
-                      Text(
-                        doc['name'],
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Container(
-                        margin: const EdgeInsets.only(top: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(4)),
-                        child: Text(
-                          position,
-                          style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    doc['name'],
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
 
                   SizedBox(
@@ -192,19 +233,16 @@ class _VotingScreenState extends State<VotingScreen> {
                             : (hasVotedForThisPosition ? Colors.grey[300] : primaryColor),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      // Disable tap if ANY state prevents voting (including if it's currently loading)
                       onPressed: (hasVotedForThisPosition || isLoading)
                           ? null
                           : () => _castVote(context, candidateId, position, doc['name']),
 
                       child: isLoading
-                      // Show Loading Spinner if processing
                           ? const SizedBox(
                           height: 15,
                           width: 15,
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                       )
-                      // Show Text otherwise
                           : Text(
                         votedForThisCandidate ? "VOTED" : (hasVotedForThisPosition ? "LOCKED" : "VOTE"),
                         style: TextStyle(

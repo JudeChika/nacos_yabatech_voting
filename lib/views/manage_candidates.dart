@@ -15,7 +15,34 @@ class ManageCandidatesScreen extends StatefulWidget {
 
 class _ManageCandidatesScreenState extends State<ManageCandidatesScreen> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _positionController = TextEditingController();
+
+  // Replaced Position Controller with a selected value for Dropdown
+  String? _selectedPosition;
+
+  // The strict hierarchy list (Do not remove this, it is needed for new candidates)
+  final List<String> _positionHierarchy = [
+    "THE PRESIDENT",
+    "THE VICE PRESIDENT 1",
+    "THE VICE PRESIDENT 2",
+    "GENERAL SECRETARY 1",
+    "GENERAL SECRETARY 2",
+    "GENERAL SECRETARY 3",
+    "THE FINANCIAL SECRETARY",
+    "THE TREASURER",
+    "THE WELFARE OFFICER 1",
+    "THE WELFARE OFFICER 2",
+    "THE PUBLIC RELATIONS OFFICER 1",
+    "THE PUBLIC RELATIONS OFFICER 2",
+    "THE PUBLIC RELATIONS OFFICER 3",
+    "THE LIBRARIAN 1",
+    "THE LIBRARIAN 2",
+    "THE LIBRARIAN 3",
+    "SPORTS DIRECTOR 1",
+    "SPORTS DIRECTOR 2",
+    "SPORTS DIRECTOR 3",
+    "SOCIAL DIRECTOR 1",
+    "SOCIAL DIRECTOR 2"
+  ];
 
   // Image Handling Variables
   File? _mobileImage;       // For Android/iOS
@@ -23,7 +50,7 @@ class _ManageCandidatesScreenState extends State<ManageCandidatesScreen> {
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
 
-  // 1. Unified Image Picker (Works on Web & Mobile)
+  // --- 1. Unified Image Picker (Works on Web & Mobile) ---
   Future<void> _pickImage() async {
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
 
@@ -45,9 +72,9 @@ class _ManageCandidatesScreenState extends State<ManageCandidatesScreen> {
     }
   }
 
-  // 2. Main Function to Upload Image & Save Candidate
+  // --- 2. Main Function to Upload Image & Save Candidate ---
   Future<void> _addCandidate() async {
-    if (_nameController.text.isEmpty || _positionController.text.isEmpty) {
+    if (_nameController.text.isEmpty || _selectedPosition == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Name and Position are required")));
       return;
     }
@@ -79,19 +106,25 @@ class _ManageCandidatesScreenState extends State<ManageCandidatesScreen> {
       TaskSnapshot snapshot = await uploadTask;
       String downloadUrl = await snapshot.ref.getDownloadURL();
 
-      // C. Save Candidate Data to Firestore
+      // C. Calculate Rank based on Hierarchy List
+      // This ensures new candidates are inserted in the correct order automatically
+      int rank = _positionHierarchy.indexOf(_selectedPosition!);
+      if (rank == -1) rank = 99; // Fallback for safety
+
+      // D. Save Candidate Data to Firestore with RANK
       await FirebaseFirestore.instance.collection('candidates').add({
         'name': _nameController.text.trim(),
-        'position': _positionController.text.trim(),
+        'position': _selectedPosition, // Save the strict name
+        'rank': rank,                  // Save the rank for sorting
         'photoUrl': downloadUrl,
         'voteCount': 0,
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      // D. Cleanup UI
+      // E. Cleanup UI
       _nameController.clear();
-      _positionController.clear();
       setState(() {
+        _selectedPosition = null;
         _mobileImage = null;
         _webImage = null;
       });
@@ -154,8 +187,40 @@ class _ManageCandidatesScreenState extends State<ManageCandidatesScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    TextField(controller: _nameController, decoration: const InputDecoration(labelText: "Full Name", prefixIcon: Icon(Icons.person))),
-                    TextField(controller: _positionController, decoration: const InputDecoration(labelText: "Position", prefixIcon: Icon(Icons.work))),
+
+                    TextField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(labelText: "Full Name", prefixIcon: Icon(Icons.person))
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    // Dropdown for Strict Hierarchy Selection
+                    DropdownButtonFormField<String>(
+                      value: _selectedPosition,
+                      decoration: const InputDecoration(
+                        labelText: "Select Position",
+                        prefixIcon: Icon(Icons.work),
+                        border: OutlineInputBorder(),
+                      ),
+                      isExpanded: true,
+                      items: _positionHierarchy.map((String position) {
+                        return DropdownMenuItem<String>(
+                          value: position,
+                          child: Text(
+                            position,
+                            style: const TextStyle(fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setDialogState(() {
+                          // Update the state variable in the parent class
+                          _selectedPosition = newValue;
+                        });
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -193,7 +258,8 @@ class _ManageCandidatesScreenState extends State<ManageCandidatesScreen> {
         label: const Text("Add Candidate", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('candidates').orderBy('position').snapshots(),
+        // SORT BY RANK (Hierarchical Order)
+        stream: FirebaseFirestore.instance.collection('candidates').orderBy('rank').snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
           if (snapshot.data!.docs.isEmpty) return const Center(child: Text("No candidates yet. Click 'Add Candidate'."));

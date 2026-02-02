@@ -96,8 +96,9 @@ class _ManageExecutivesScreenState extends State<ManageExecutivesScreen> {
   @override
   Widget build(BuildContext context) {
     ImageProvider? imageProvider;
-    if (_webImage != null) imageProvider = MemoryImage(_webImage!);
-    else if (_mobileImage != null) imageProvider = FileImage(_mobileImage!);
+    if (_webImage != null) {
+      imageProvider = MemoryImage(_webImage!);
+    } else if (_mobileImage != null) imageProvider = FileImage(_mobileImage!);
 
     return Scaffold(
       appBar: AppBar(title: const Text("Add Executive"), backgroundColor: const Color(0xFF006400), foregroundColor: Colors.white),

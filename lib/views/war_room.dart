@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -128,7 +127,7 @@ class WarRoom extends StatelessWidget {
         // LIST OF CANDIDATES
         ...candidates.map((doc) {
           return _buildCandidateCard(doc, totalVotes);
-        }).toList(),
+        }),
 
         const SizedBox(height: 20),
         Divider(color: Colors.white.withOpacity(0.1)),

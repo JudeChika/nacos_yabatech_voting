@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ManageGalleryScreen extends StatefulWidget {
   const ManageGalleryScreen({super.key});
@@ -80,8 +79,9 @@ class _ManageGalleryScreenState extends State<ManageGalleryScreen> {
   @override
   Widget build(BuildContext context) {
     ImageProvider? imageProvider;
-    if (_webImage != null) imageProvider = MemoryImage(_webImage!);
-    else if (_mobileImage != null) imageProvider = FileImage(_mobileImage!);
+    if (_webImage != null) {
+      imageProvider = MemoryImage(_webImage!);
+    } else if (_mobileImage != null) imageProvider = FileImage(_mobileImage!);
 
     return Scaffold(
       appBar: AppBar(title: const Text("Upload Event Photo"), backgroundColor: const Color(0xFF006400), foregroundColor: Colors.white),
